@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .subsection {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .diagram {
+            background: #f5f5f5;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .note {
+            background: #fffbe6;
+            padding: 10px;
+            margin: 10px 0;
+            border-left: 4px solid #ffd700;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+
+        th {
+            background: #f5f5f5;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>TAM System Account Management Technical Specification</h1>
+
+    <div class="section">
+        <h2>1. System Architecture Overview</h2>
+        <div class="subsection">
+            <h3>1.1 Core Database Relationships</h3>
+            <div class="diagram">
+                <svg viewBox="0 0 800 500" style="width: 100%; max-width: 800px;">
+                    <!-- SSO Database Section -->
+                    <rect x="50" y="20" width="300" height="200" fill="#e3f2fd" stroke="#2196f3" />
+                    <text x="200" y="45" text-anchor="middle" font-weight="bold">SSO Database</text>
+
+                    <!-- SitePortalUser Entity -->
+                    <rect x="70" y="60" width="260" height="140" fill="white" stroke="#2196f3" />
+                    <text x="200" y="80" text-anchor="middle" font-weight="bold">SitePortalUser</text>
+                    <text x="80" y="100" font-size="12">- UserId</text>
+                    <text x="80" y="120" font-size="12">- PortalCompanyId (FK)</text>
+                    <text x="80" y="140" font-size="12">- SitePortalAccess</text>
+                    <text x="80" y="160" font-size="12">- isInternalOnly</text>
+
+                    <!-- TAM Database Section -->
+                    <rect x="450" y="20" width="300" height="400" fill="#e8f5e9" stroke="#4caf50" />
+                    <text x="600" y="45" text-anchor="middle" font-weight="bold">TAM Database</text>
+
+                    <!-- AccountGroup Entity -->
+                    <rect x="470" y="60" width="260" height="120" fill="white" stroke="#4caf50" />
+                    <text x="600" y="80" text-anchor="middle" font-weight="bold">AccountGroup</text>
+                    <text x="480" y="100" font-size="12">- AccountGroupId</text>
+                    <text x="480" y="120" font-size="12">- PortalCompanyId (FK)</text>
+
+                    <!-- Account Entity -->
+                    <rect x="470" y="200" width="260" height="200" fill="white" stroke="#4caf50" />
+                    <text x="600" y="220" text-anchor="middle" font-weight="bold">Account</text>
+                    <text x="480" y="240" font-size="12">- AccountId</text>
+                    <text x="480" y="260" font-size="12">- AccountGroupId (FK)</text>
+                    <text x="480" y="280" font-size="12">- AP_Interface_Flag (In TMM Db)</text>
+                    <text x="480" y="300" font-size="12">- Branch</text>
+                </svg>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>2. User Types and Classification</h2>
+        <div class="subsection">
+            <h3>2.1 Overview</h3>
+            <p>The TAM system supports three distinct user types, each serving different business functions:</p>
+
+            <p><strong>TMM Admin Users:</strong><br>
+                Internal users who manage the core system operations. They have the highest level of access and can
+                manage containers, trucks, and all system resources. These users represent the company's internal staff
+                and have full administrative capabilities within their assigned branches.</p>
+
+            <p><strong>Broker Users:</strong><br>
+                External partners who primarily handle order status updates and exception management. They act as
+                intermediaries in the transportation process but don't create orders themselves. Their main functions
+                include updating order statuses, managing exceptions, and communication through the messaging system.
+            </p>
+
+            <p><strong>Customer Users:</strong><br>
+                External users who create and manage orders. Unlike brokers, they have the ability to create new orders
+                but don't handle status updates. They primarily interact with the system for order creation, tracking,
+                and communication purposes.</p>
+
+            <h3>2.2 User Classification Logic</h3>
+            <p><strong>TMM Admin Identification:</strong></p>
+            <p>Determined in SSO database through either:</p>
+            <ul>
+                <li><code>SitePortalUser.isInternalOnly = true</code> OR</li>
+                <li><code>SitePortalCompany.isInternalOnly = true</code> where
+                    <code>SitePortalUser.companyId = SitePortalCompany.companyId</code>
+                </li>
+            </ul>
+
+            <p><strong>Broker Identification:</strong></p>
+            <p>Identified in TMM database through:</p>
+            <ul>
+                <li><code>TMM.CreditAccount.AP_Interface_Flag = 'Y'</code> for accounts in their assigned AccountGroup
+                </li>
+            </ul>
+
+            <p><strong>Customer Identification:</strong></p>
+            <ul>
+                <li>External user (not TMM Admin)</li>
+                <li>No associated accounts have <code>AP_Interface_Flag = 'Y'</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>3. Access Control Model</h2>
+        <div class="subsection">
+            <h3>3.1 User Creation and Initial Setup</h3>
+            <p>1. User Creation in SSO:</p>
+            <ul>
+                <li>All users are initially created in the SSO system</li>
+                <li>System associates user with their PortalCompanyId</li>
+                <li>PortalCompanyId links to corresponding AccountGroup in TAM</li>
+            </ul>
+
+            <p>2. TAM</p>
+            <ul>
+                <li>First user of an AccountGroup automatically receives all applicable access rights</li>
+                <li>Access scope is determined by their AccountGroup association</li>
+            </ul>
+
+            <p>3. Link User to Accounts:</p>
+            <ul>
+                <li>First user can create additional users within their AccountGroup</li>
+                <li>Can assign specific account access from available accounts in their AccountGroup</li>
+                <li>Assigned access determines available options in dropdown menus across the system</li>
+            </ul>
+
+            <p>For TMM Users, they are not restricted by the AccountGroup limitation, meaning that they always have
+                access to the full account list in the system.</p>
+
+            <h3>3.2 Default Access Rights</h3>
+            <p>All users receive these base access rights:</p>
+            <ul>
+                <li>Full messaging functionality within their scope</li>
+                <li>View access to accounts (filtered by assignments)</li>
+                <li>View access to orders (filtered by assignments)</li>
+            </ul>
+            <div class="note">
+                For any functionalities that can be filtered by account, the user is always restricted to the accounts
+                that they were grant access to.
+            </div>
+            <h3>3.3 Access Rights by User Type</h3>
+            <table>
+                <tr>
+                    <th>Access Right</th>
+                    <th>Internal Users</th>
+                    <th>External Users</th>
+                </tr>
+                <tr>
+                    <td>Create & Modify Orders</td>
+                    <td>Yes</td>
+                    <td>Customers Only (1)</td>
+                </tr>
+                <tr>
+                    <td>View Reports</td>
+                    <td>Yes</td>
+                    <td>Yes</td>
+                </tr>
+                <tr>
+                    <td>Create & Modify Users</td>
+                    <td>Yes</td>
+                    <td>Yes</td>
+                </tr>
+                <tr>
+                    <td>Manage Accounts</td>
+                    <td>Yes</td>
+                    <td>Yes</td>
+                </tr>
+                <tr>
+                    <td>View Trucks</td>
+                    <td>Yes</td>
+                    <td>No (Page not required)</td>
+                </tr>
+                <tr>
+                    <td>View Containers</td>
+                    <td>Yes</td>
+                    <td>No (Page not required)</td>
+                </tr>
+                <tr>
+                    <td>Create/Modify Trucks</td>
+                    <td>Yes</td>
+                    <td>No (Page not required)</td>
+                </tr>
+                <tr>
+                    <td>Create/Modify Containers</td>
+                    <td>Yes</td>
+                    <td>No (Page not required)</td>
+                </tr>
+                <tr>
+                    <td>View Dispatch (Calendar Page)</td>
+                    <td>Yes</td>
+                    <td>No (Page not required)</td>
+                </tr>
+                <tr>
+                    <td>Assign Dispatch (UI Interactions) (2)</td>
+                    <td>Yes</td>
+                    <td>No (Page not required)</td>
+                </tr>
+            </table>
+
+            <div class="note">
+                (1) Broker users always have hard-coded restrictions that prevent them from creating or modifying
+                orders. Their
+                access is limited to updating order status and writing exceptions, regardless of other access settings.
+
+                <section class="capabilities">
+                    (2) Assign Dispatch capabilities include:
+                    <ul>
+                        <li>Interactive button controls for dispatch operations</li>
+                        <li>Drag and drop functionality for order assignment</li>
+                        <li>Ability to modify dispatch schedules and assignments</li>
+                        <li>Direct manipulation of orders on the calendar interface</li>
+                        <li>Dispatch status updates and modifications</li>
+                    </ul>
+
+                    <p class="note-footer">
+                        Users without this access can still view the dispatch calendar but
+                        cannot perform any interactive operations. This separation ensures
+                        dispatch operations are only performed by authorized internal users
+                        while maintaining visibility for planning purposes.
+                    </p>
+                </section>
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>4. Menu Access Implementation</h2>
+        <div class="subsection">
+            <h3>4.1 Menu Access by User Type</h3>
+            <p><strong>TMM User Menu Options:</strong>(Assuming the user has all applicable access rights)</p>
+            <ul>
+                <li>Containers</li>
+                <li>Trucks</li>
+                <li>Orders</li>
+                <li>Users</li>
+                <li>Messaging</li>
+                <li>Accounts</li>
+                <li>Reports</li>
+                <li>Dispatch Calendar</li>
+            </ul>
+
+            <p><strong>Broker/Customer Menu Options:</strong></p>
+            <ul>
+                <li>Orders</li>
+                <li>Users</li>
+                <li>Messaging</li>
+                <li>Accounts</li>
+                <li>Reports</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>5. Container and Truck Management</h2>
+        <div class="subsection">
+            <h3>5.1 Branch-Based Access Implementation</h3>
+            <p>The system implements branch-based access control for containers and trucks through managing branch
+                assignments. The current servicing account filter has been replaced with a managing branch filter, which
+                provides more precise access control. This managing branch filter specifically displays only TMM
+                branches, identified by Branch column = 1 in the database.</p>
+
+            <p>Users can only access and view trucks and containers where the managing branch matches one of their
+                assigned branches(accounts). This restriction applies uniformly across all container and truck
+                management interfaces. When accessing these resources, the system automatically filters the view to show
+                only resources associated with the user's assigned TMM branches.</p>
+
+            <div class="note">
+                External users (Brokers and Customers) do not have access to container and truck management
+                functionalities
+            </div>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>6. Branch/Account Switching Implementation</h2>
+        <div class="subsection">
+            <h3>6.1 Account Filter Usage</h3>
+            <p>All users utilize the account filter in the order list view for switching between different
+                branches/accounts. This functionality:</p>
+            <ul>
+                <li>Remains restricted to assigned accounts</li>
+                <li>Maintains proper access control boundaries</li>
+                <li>Applies consistently across all user types</li>
+            </ul>
+            <div class="note">
+                Account switching capability remains within the user's assigned scope as defined by their AccountGroup
+                and AccountUser association
+            </div>
+        </div>
+    </div>
+</body>
+</html>
