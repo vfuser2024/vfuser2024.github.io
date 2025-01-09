@@ -330,5 +330,127 @@
             </div>
         </div>
     </div>
+    <div class="section">
+        <h2>7. Order Management System</h2>
+        <div class="subsection">
+            <h3>7.1 Order Status Workflow</h3>
+            <p>The order management system supports multiple statuses that reflect the lifecycle of an order:</p>
+            <ul>
+                <li><strong>Pending:</strong> Initial status when order is created, awaiting servicing account verification</li>
+                <li><strong>Received:</strong> Order confirmed by servicing account (broker or TMM) and assigned to driver
+                    <ul>
+                        <li>For TMM users: Status automatically changes to On Route when order appears in calendar</li>
+                        <li>For brokers: Status must be updated manually</li>
+                    </ul>
+                </li>
+                <li><strong>On Route:</strong> (labeled as "In Progress" in system)
+                    <ul>
+                        <li>TMM orders: Automatically updated when driver starts order via mobile app</li>
+                        <li>Broker orders: Requires manual status update</li>
+                    </ul>
+                </li>
+                <li><strong>Exception:</strong> Automatically applied when unresolved exception exists
+                    <ul>
+                        <li>System automatically reverts to On Route when all exceptions are resolved</li>
+                    </ul>
+                </li>
+                <li><strong>Completed:</strong> Order finished with no issues
+                    <ul>
+                        <li>TMM orders: Automatically updated via mobile app</li>
+                        <li>Broker orders: Requires manual completion</li>
+                    </ul>
+                </li>
+                <li><strong>Completed with Exception:</strong> Order finished but issues occurred</li>
+                <li><strong>Cancel Request:</strong> Customer has requested order cancellation</li>
+                <li><strong>Cancelled:</strong> Cancellation verified by servicing account</li>
+            </ul>
+
+            <h3>7.2 Order View Interface</h3>
+            <p><strong>Top-Level Status Filter:</strong></p>
+            <ul>
+                <li>Includes all status options except archived statuses</li>
+                <li>Archived button combines:
+                    <ul>
+                        <li>Completed</li>
+                        <li>Completed with Exception</li>
+                        <li>Cancelled</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <p><strong>Secondary Filters:</strong></p>
+            <ul>
+                <li>Order Number</li>
+                <li>Servicing Account
+                    <ul>
+                        <li>Dropdown limited to user's assigned accounts</li>
+                        <li>Filters based on Servicing Account Field</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <h3>7.3 Exception Management</h3>
+            <p><strong>Exception Structure:</strong></p>
+            <ul>
+                <li>Orders can have multiple exceptions</li>
+                <li>Each exception:
+                    <ul>
+                        <li>Has exactly one ExceptionCategory</li>
+                        <li>Can have multiple ExceptionTypes</li>
+                        <li>Types stored in ExceptionType table</li>
+                        <li>Final type data saved in ExceptionReportedType table</li>
+                    </ul>
+                </li>
+            </ul>
+
+            <div class="note">
+                Order status automatically changes to Exception when any unresolved exception exists. Status reverts to On Route when all exceptions are resolved. User maintains final decision on completed vs. completed with exception status.
+            </div>
+
+            <p><strong>Exception Creation Process:</strong></p>
+            <ol>
+                <li>User selects:
+                    <ul>
+                        <li>Exception Category (required)</li>
+                        <li>Estimated delay time (required)</li>
+                    </ul>
+                </li>
+                <li>After category selection:
+                    <ul>
+                        <li>Exception Types selection unlocks</li>
+                        <li>Multiple types can be added as needed</li>
+                    </ul>
+                </li>
+            </ol>
+
+            <p><strong>Exception Table Display:</strong></p>
+            <table>
+                <tr>
+                    <th>Column</th>
+                    <th>Description</th>
+                </tr>
+                <tr>
+                    <td>Exception Category</td>
+                    <td>Selected category for the exception</td>
+                </tr>
+                <tr>
+                    <td>Exception Type</td>
+                    <td>Comma-separated list of selected types</td>
+                </tr>
+                <tr>
+                    <td>Start Time</td>
+                    <td>Exception record creation timestamp</td>
+                </tr>
+                <tr>
+                    <td>End Time</td>
+                    <td>Exception resolution timestamp</td>
+                </tr>
+                <tr>
+                    <td>Resolved</td>
+                    <td>Actionable field for exception status</td>
+                </tr>
+            </table>
+        </div>
+    </div>
 </body>
 </html>
