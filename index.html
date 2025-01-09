@@ -367,6 +367,8 @@
 
             <h3>7.2 Order View Interface</h3>
             <p><strong>Top-Level Status Filter:</strong></p>
+            <p>Current:</p>
+            <img src="current.png" alt="Description of image" />
             <ul>
                 <li>Includes all status options except archived statuses</li>
                 <li>Archived button combines:
@@ -379,6 +381,8 @@
             </ul>
 
             <p><strong>Secondary Filters:</strong></p>
+            <p>Current:</p>
+            <img src="current2.png" alt="Description of image" />
             <ul>
                 <li>Order Number</li>
                 <li>Servicing Account
@@ -387,67 +391,189 @@
                         <li>Filters based on Servicing Account Field</li>
                     </ul>
                 </li>
+                <li>Includes
+                    <ul>
+                        <li>The current implementation is good as is for this filter.</li>
+                    </ul>
+                </li>
             </ul>
 
             <h3>7.3 Exception Management</h3>
-            <p><strong>Exception Structure:</strong></p>
+            <div class="diagram">
+                <svg viewBox="0 0 900 500" style="width: 100%; max-width: 900px;">
+                    <!-- Order Entity -->
+                    <rect x="50" y="50" width="200" height="140" fill="#e3f2fd" stroke="#2196f3" />
+                    <text x="150" y="80" text-anchor="middle" font-weight="bold">Order</text>
+                    <text x="70" y="105" font-size="12">- OrderId</text>
+                    <text x="70" y="125" font-size="12">- Status</text>
+                    <text x="70" y="145" font-size="12">- ServicingAccountId</text>
+                    <text x="70" y="165" font-size="12">- CreatedDate</text>
+
+                    <!-- Exception Entity -->
+                    <rect x="350" y="50" width="200" height="160" fill="#e8f5e9" stroke="#4caf50" />
+                    <text x="450" y="80" text-anchor="middle" font-weight="bold">Exception</text>
+                    <text x="370" y="105" font-size="12">- ExceptionId</text>
+                    <text x="370" y="125" font-size="12">- OrderId (FK)</text>
+                    <text x="370" y="145" font-size="12">- CategoryId (FK)</text>
+                    <text x="370" y="165" font-size="12">- EstimatedDelay</text>
+                    <text x="370" y="185" font-size="12">- Status</text>
+
+                    <!-- ExceptionCategory Entity -->
+                    <rect x="650" y="50" width="200" height="120" fill="#fff3e0" stroke="#ff9800" />
+                    <text x="750" y="80" text-anchor="middle" font-weight="bold">ExceptionCategory</text>
+                    <text x="670" y="105" font-size="12">- CategoryId</text>
+                    <text x="670" y="125" font-size="12">- Name</text>
+                    <text x="670" y="145" font-size="12">- Description</text>
+
+                    <!-- ExceptionType Entity -->
+                    <rect x="350" y="300" width="200" height="120" fill="#fce4ec" stroke="#e91e63" />
+                    <text x="450" y="330" text-anchor="middle" font-weight="bold">ExceptionType</text>
+                    <text x="370" y="355" font-size="12">- TypeId</text>
+                    <text x="370" y="375" font-size="12">- CategoryId (FK)</text>
+                    <text x="370" y="395" font-size="12">- Name</text>
+
+                    <!-- ExceptionReportedType Entity -->
+                    <rect x="650" y="300" width="200" height="120" fill="#f3e5f5" stroke="#9c27b0" />
+                    <text x="750" y="330" text-anchor="middle" font-weight="bold">ExceptionReportedType</text>
+                    <text x="670" y="355" font-size="12">- ExceptionId (FK)</text>
+                    <text x="670" y="375" font-size="12">- TypeId (FK)</text>
+                    <text x="670" y="395" font-size="12">- CreatedDate</text>
+
+                    <!-- Relationship Lines with Cardinality -->
+                    <line x1="250" y1="120" x2="350" y2="120" stroke="#000" stroke-dasharray="5,5" />
+                    <text x="290" y="110" font-size="12">1:n</text>
+
+                    <line x1="550" y1="120" x2="650" y2="120" stroke="#000" stroke-dasharray="5,5" />
+                    <text x="590" y="110" font-size="12">n:1</text>
+
+                    <line x1="450" y1="210" x2="450" y2="300" stroke="#000" stroke-dasharray="5,5" />
+                    <text x="460" y="250" font-size="12">1:n</text>
+
+                    <line x1="550" y1="360" x2="650" y2="360" stroke="#000" stroke-dasharray="5,5" />
+                    <text x="590" y="350" font-size="12">n:n</text>
+                </svg>
+            </div>
+
+            <h3>7.4 Exception Creation Process</h3>
+            <p><strong>Exception Creation Fields (in order):</strong></p>
             <ul>
-                <li>Orders can have multiple exceptions</li>
-                <li>Each exception:
+                <li>Exception Category
                     <ul>
-                        <li>Has exactly one ExceptionCategory</li>
-                        <li>Can have multiple ExceptionTypes</li>
-                        <li>Types stored in ExceptionType table</li>
-                        <li>Final type data saved in ExceptionReportedType table</li>
+                        <li>Required dropdown field</li>
+                        <li>Must be selected first</li>
+                        <li>Populated from ExceptionCategory table</li>
+                    </ul>
+                </li>
+                <li>Exception Type
+                    <ul>
+                        <li>Locked by default</li>
+                        <li>Unlocks only after category selection</li>
+                        <li>Required Mutli-Select Dropdown Field</li>
+                        <li>Shows types associated with selected category</li>
+                        <li>Multiple selections allowed</li>
+                    </ul>
+                </li>
+                <li>Estimated Delay
+                    <ul>
+                        <li>String field</li>
+                        <li>Free text input for delay description</li>
+                        <li>Required field</li>
+                    </ul>
+                </li>
+                <li>Notes
+                    <ul>
+                        <li>Optional text field</li>
+                        <li>Additional details about the exception</li>
                     </ul>
                 </li>
             </ul>
+            <p>Mockup:</p>
+            <img src="ExceptionCreate.png" alt="Description of image" />
 
             <div class="note">
-                Order status automatically changes to Exception when any unresolved exception exists. Status reverts to On Route when all exceptions are resolved. User maintains final decision on completed vs. completed with exception status.
+                When an exception is created, the order status automatically changes to Exception. Once all exceptions are resolved, the status reverts to On Route. The user decides whether to mark as Completed or Completed with Exception when closing the order.
             </div>
 
-            <p><strong>Exception Creation Process:</strong></p>
-            <ol>
-                <li>User selects:
-                    <ul>
-                        <li>Exception Category (required)</li>
-                        <li>Estimated delay time (required)</li>
-                    </ul>
-                </li>
-                <li>After category selection:
-                    <ul>
-                        <li>Exception Types selection unlocks</li>
-                        <li>Multiple types can be added as needed</li>
-                    </ul>
-                </li>
-            </ol>
-
-            <p><strong>Exception Table Display:</strong></p>
+            <p><strong>Exception Table Headers:</strong></p>
             <table>
                 <tr>
                     <th>Column</th>
                     <th>Description</th>
+                    <th>Sample Data</th>
                 </tr>
                 <tr>
-                    <td>Exception Category</td>
-                    <td>Selected category for the exception</td>
+                    <td>Exception ID</td>
+                    <td>Unique identifier for the exception</td>
+                    <td>EXC001</td>
                 </tr>
                 <tr>
-                    <td>Exception Type</td>
-                    <td>Comma-separated list of selected types</td>
+                    <td>Category</td>
+                    <td>Selected exception category</td>
+                    <td>Delay</td>
                 </tr>
                 <tr>
-                    <td>Start Time</td>
+                    <td>Type(s)</td>
+                    <td>Comma-separated list of exception types</td>
+                    <td>Traffic, Weather</td>
+                </tr>
+                <tr>
+                    <td>Created Date</td>
                     <td>Exception record creation timestamp</td>
+                    <td>2024-01-08 09:30:00</td>
                 </tr>
                 <tr>
-                    <td>End Time</td>
+                    <td>Resolution Date</td>
                     <td>Exception resolution timestamp</td>
+                    <td>2024-01-08 11:45:00</td>
                 </tr>
                 <tr>
+                    <td>Status</td>
+                    <td>Current resolution status</td>
+                    <td>Resolved/Unresolved</td>
+                </tr>
+                <tr>
+                    <td>Estimated Delay</td>
+                    <td>Expected delay duration</td>
+                    <td>2 hours</td>
+                </tr>
+                <tr>
+                    <td>Actions</td>
+                    <td>Available operations for the exception</td>
+                    <td>Resolve/Edit</td>
+                </tr>
+            </table>
+
+            <p><strong>Sample Exception Table Data:</strong></p>
+            <table>
+                <tr>
+                    <th>Exception ID</th>
+                    <th>Category</th>
+                    <th>Type(s)</th>
+                    <th>Created Date</th>
+                    <th>Resolution Date</th>
+                    <th>Status</th>
+                    <th>Est. Delay</th>
+                    <th>Actions</th>
+                </tr>
+                <tr>
+                    <td>EXC001</td>
+                    <td>Delay</td>
+                    <td>Traffic, Weather</td>
+                    <td>2024-01-08 09:30</td>
+                    <td>2024-01-08 11:45</td>
                     <td>Resolved</td>
-                    <td>Actionable field for exception status</td>
+                    <td>2 hours</td>
+                    <td>View</td>
+                </tr>
+                <tr>
+                    <td>EXC002</td>
+                    <td>Equipment</td>
+                    <td>Mechanical Issue</td>
+                    <td>2024-01-08 14:20</td>
+                    <td>-</td>
+                    <td>Unresolved</td>
+                    <td>4 hours</td>
+                    <td>Resolve/Edit</td>
                 </tr>
             </table>
         </div>
